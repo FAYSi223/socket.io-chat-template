@@ -10,7 +10,10 @@
     {
       "src": "/(.*)",
       "dest": "/public/$1"
+    },
+    {
+      "src": "/socket.io/(.*)",
+      "dest": "/api/socket.io/$1"
     }
-  ],
-  "outputDirectory": "public"
+  ]
 }
