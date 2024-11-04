@@ -7,23 +7,37 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-app.use(express.static(path.join(__dirname)));
+const PORT = 3000;
+
+let users = {};
+let messages = [];
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
-    console.log('Neuer Benutzer verbunden');
+    console.log('A user connected:', socket.id);
+
     socket.on('setUsername', (username) => {
-        socket.username = username;
-        socket.emit('message', `Welcome to Venture, ${username}!`);
-        socket.broadcast.emit('message', `${username}was joined`);
+        users[socket.id] = username;
+        socket.emit('chatHistory', messages);
+        console.log(`${username} has joined the chat.`);
     });
+
     socket.on('chatMessage', (msg) => {
-        io.emit('message', `${socket.username}: ${msg}`);
+        const message = {
+            username: users[socket.id],
+            text: msg,
+            time: new Date().toLocaleTimeString()
+        };
+        messages.push(message);
+        io.emit('message', message);
     });
+
     socket.on('disconnect', () => {
-        if (socket.username) {
-            io.emit('message', `${socket.username} hat den Chat verlassen`);
-        }
+        console.log(`${users[socket.id]} has left the chat.`);
+        delete users[socket.id];
     });
 });
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server läuft auf Port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
